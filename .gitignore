@@ -1,0 +1,5 @@
+*.swp
+
+# direnv
+.direnv
+.direnv.local

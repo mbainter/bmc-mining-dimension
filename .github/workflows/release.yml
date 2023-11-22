@@ -1,0 +1,37 @@
+name: Build and release
+on:
+  # Create the tests pass...
+  workflow_run:
+    workflows:
+      - Run tests
+    branches:
+      - main
+    types:
+      - completed
+  workflow_dispatch:
+
+env:
+  DATAPACK_BASENAME: "bmc3-mining-dimension"
+
+jobs:
+  release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run PackSquash
+        uses: ComunidadAylas/PackSquash-action@v4
+        with:
+          artifact_name: "$DATAPACK_BASENAME"
+          packsquash_version: latest
+          options: |
+            pack-directory = '.'
+            output_file_path = '/tmp/${DATAPACK_BASENAME}.zip'
+      - name: Tag and create release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "v${{ github.run_number }}"
+          files: "/tmp/${DATAPACK_BASENAME}.zip"

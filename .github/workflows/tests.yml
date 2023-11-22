@@ -1,0 +1,40 @@
+name: Run tests
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths:
+      - data/**
+jobs:
+  build-main:
+    runs-on: ubuntu-latest
+    steps:
+      # Clones repository so it has access to the files
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Determine the pull-request id
+        id: pr
+        run: echo "::set-output name=pr_number::$(gh pr view --json number -q .number || echo "")"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Checks mcfunction files for errors
+      - name: Check commands
+        uses: mcbeet/check-commands@v1
+        with:
+          source: .
+          minecraft: 1.19
+      # Checks JSON for errors
+      - name: Check JSON
+        uses: ocular-d/json-linter@0.0.2
+      # Uploads an artifact that you can download and use in your Minecraft world
+      - name: Compile and upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: bmc3-mining-dimension-pr${{steps.pr.outputs.pr_number}}
+          path: |
+               data/
+               pack.mcmeta
+               pack.png
+       # Errors if files aren't found
+          if-no-files-found: error
